@@ -212,6 +212,24 @@ def run_job_hand(job_id: str, video_path: str, weights_path: str | None):
             preview=False,
             weights_path=weights_path,
         )
+        # Re-encode to H.264 so browsers can play it (OpenCV mp4v isn't browser-compatible)
+        from inference import FFMPEG_CMD
+        h264_path = os.path.join(out_dir, "video_detected_h264.mp4")
+        try:
+            subprocess.run([
+                FFMPEG_CMD, "-y",
+                "-i", video_out_path,
+                "-i", video_path,
+                "-c:v", "libx264",
+                "-c:a", "aac",
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-shortest",
+                h264_path,
+            ], check=True, capture_output=True, text=True)
+            video_out_path = h264_path
+        except Exception as e:
+            print(f"Warning: H.264 re-encode failed, using original: {e}")
         rows = 0
         if os.path.isfile(csv_path):
             with open(csv_path, "r", encoding="utf-8") as f:

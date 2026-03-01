@@ -131,11 +131,15 @@ export default function App() {
           const logsData = await logsRes.json()
           setLogs(logsData.events || [])
         }
-        // Get video URL (prefer combined, fallback to audio/hand)
-        const videoType = (data.audio && data.hand && data.combined) ? 'combined' :
-          (data.audio ? 'audio' : (data.hand ? 'hand' : null))
-        if (videoType) {
-          setVideoUrl(`${API}/video-stream/${id}?type=${videoType}`)
+        // Get video URL (prefer combined, fallback to audio/hand, then single-mode)
+        if (data.audio && data.hand && data.combined) {
+          setVideoUrl(`${API}/video-stream/${id}?type=combined`)
+        } else if (data.audio) {
+          setVideoUrl(`${API}/video-stream/${id}?type=audio`)
+        } else if (data.hand) {
+          setVideoUrl(`${API}/video-stream/${id}?type=hand`)
+        } else if (data.video_path || data.csv_path) {
+          setVideoUrl(`${API}/video-stream/${id}`)
         }
       } catch (err) {
         console.error('Error fetching logs/video:', err)
@@ -222,24 +226,50 @@ export default function App() {
     if (!generatedNoteRef.current || !noteRows.length) return
     try {
       const node = generatedNoteRef.current
+      const origMaxHeight = node.style.maxHeight
+      const origOverflow = node.style.overflowY
+      node.style.maxHeight = 'none'
+      node.style.overflowY = 'visible'
+
       const canvas = await html2canvas(node, {
-        scale: window.devicePixelRatio || 2,
+        scale: 2,
         useCORS: true,
         backgroundColor: '#f5f0e1',
+        windowHeight: node.scrollHeight + 200,
       })
+
+      node.style.maxHeight = origMaxHeight
+      node.style.overflowY = origOverflow
+
       const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: 'a4',
-      })
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = pageWidth - 80
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      const offsetY = Math.max((pageHeight - imgHeight) / 2, 40)
-      pdf.text('Generated Note', pageWidth / 2, 32, { align: 'center' })
-      pdf.addImage(imgData, 'PNG', 40, offsetY, imgWidth, imgHeight, undefined, 'FAST')
+      const margin = 40
+      const titleH = 36
+      const usableW = pageWidth - margin * 2
+      const imgScaledH = (canvas.height * usableW) / canvas.width
+      let yOffset = 0
+      let page = 0
+
+      while (yOffset < canvas.height) {
+        if (page > 0) pdf.addPage()
+        const availH = page === 0 ? pageHeight - margin - titleH : pageHeight - margin * 2
+        const sliceH = (availH / usableW) * canvas.width
+        const sourceH = Math.min(sliceH, canvas.height - yOffset)
+        const slice = document.createElement('canvas')
+        slice.width = canvas.width
+        slice.height = sourceH
+        slice.getContext('2d').drawImage(canvas, 0, yOffset, canvas.width, sourceH, 0, 0, canvas.width, sourceH)
+        const sliceData = slice.toDataURL('image/png')
+        const drawH = (sourceH * usableW) / canvas.width
+        const topY = page === 0 ? margin + titleH : margin
+        if (page === 0) pdf.text('Generated Note', pageWidth / 2, margin + 12, { align: 'center' })
+        pdf.addImage(sliceData, 'PNG', margin, topY, usableW, drawH, undefined, 'FAST')
+        yOffset += sourceH
+        page++
+      }
+
       pdf.save('generated-note.pdf')
     } catch (err) {
       console.error('Failed to generate PDF', err)
