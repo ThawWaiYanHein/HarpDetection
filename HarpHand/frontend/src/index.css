@@ -1,67 +1,87 @@
+/* NAT SHIN NAUNG — Vintage / Steampunk design system */
 * {
   box-sizing: border-box;
 }
 
 :root {
-  --bg: #0f172a;
-  --bg-gradient: radial-gradient(ellipse 100% 70% at 50% -10%, rgba(45, 212, 191, 0.08), transparent),
-                radial-gradient(ellipse 60% 40% at 100% 0%, rgba(56, 189, 248, 0.05), transparent);
-  --surface: #1e293b;
-  --surface-hover: #334155;
-  --border: #334155;
-  --border-focus: #475569;
-  --text: #f1f5f9;
-  --text-soft: #cbd5e1;
-  --muted: #94a3b8;
-  --accent: #2dd4bf;
-  --accent-hover: #5eead4;
-  --accent-muted: rgba(45, 212, 191, 0.18);
-  --success: #34d399;
-  --success-muted: rgba(52, 211, 153, 0.15);
-  --error: #f87171;
-  --error-muted: rgba(248, 113, 113, 0.12);
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.25);
+  /* Vintage palette */
+  --parchment: #f5f0e1;
+  --parchment-dark: #ebe4d0;
+  --paper: #e8e0d0;
+  --sepia: #d4c4a8;
+  --brown-dark: #2d1f0e;
+  --brown: #3d2e1a;
+  --brown-light: #5c4a32;
+  --metal: #4a4035;
+  --metal-light: #6b5d4d;
+  --gold: #b8860b;
+  --gold-light: #c4a574;
+  --bronze: #8b6914;
+  --cream: #faf6eb;
+  --cream-text: #e8e0d0;
+  --text: #2d1f0e;
+  --text-soft: #4a4035;
+  --muted: #6b5d4d;
+  --accent: #b8860b;
+  --accent-hover: #c4a574;
+  --accent-muted: rgba(184, 134, 11, 0.2);
+  --success: #5a7d3e;
+  --success-muted: rgba(90, 125, 62, 0.15);
+  --error: #a63d3d;
+  --error-muted: rgba(166, 61, 61, 0.12);
+  --border: #c4a574;
+  --border-focus: #b8860b;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 20px rgba(45, 31, 14, 0.15);
+  --shadow-sm: 0 2px 12px rgba(45, 31, 14, 0.1);
+  /* Legacy aliases for Tool page */
+  --bg: var(--parchment);
+  --surface: var(--paper);
+  --surface-hover: var(--parchment-dark);
 }
 
 body {
   margin: 0;
-  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
-  background: var(--bg);
-  background-image: var(--bg-gradient);
+  font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+  background: var(--parchment);
   color: var(--text);
   min-height: 100vh;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2 {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.02em;
+/* Paper texture overlay (subtle noise) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+h1, h2, .vintage-heading {
+  font-family: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--brown-dark);
 }
 
 h1 {
-  font-size: 2.25rem;
+  font-size: 2rem;
   margin: 0 0 0.35rem;
-  color: var(--text);
-  background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 h2 {
-  font-size: 1.1rem;
-  color: var(--muted);
+  font-size: 1.35rem;
+  color: var(--gold);
   margin: 0 0 1rem;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 button {
-  font-family: inherit;
+  font-family: 'Libre Baskerville', Georgia, serif;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -74,4 +94,14 @@ button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--gold-light);
+  text-decoration: underline;
 }

@@ -183,6 +183,114 @@ def create_pluck_filtered_video(
         writer.release()
 
 
+def create_hand_filtered_video(
+    original_video: str,
+    hand_csv: str,
+    output_path: str,
+    fps: float = 30.0,
+    touch_window_frames: int = 5,
+):
+    """
+    Create video with hand annotations only at touch moments (hand-only mode).
+    Only draws labels at frames where a hand touch was detected.
+    """
+    cap = cv2.VideoCapture(original_video)
+    if not cap.isOpened():
+        raise RuntimeError(f"Cannot open: {original_video}")
+
+    fps_vid = cap.get(cv2.CAP_PROP_FPS) or fps
+    W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    writer = cv2.VideoWriter(
+        output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps_vid, (W, H)
+    )
+
+    hand_events_by_time = {}
+    pluck_frames = set()
+    if os.path.isfile(hand_csv):
+        try:
+            with open(hand_csv, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    time_str = row.get("time", "00:00.00")
+                    parts = time_str.split(":")
+                    if len(parts) == 2:
+                        try:
+                            minutes = int(parts[0])
+                            sec_part = float(parts[1])
+                            hand_time = minutes * 60 + sec_part
+                            frame_idx = int(round(hand_time * fps_vid))
+                            if frame_idx not in hand_events_by_time:
+                                hand_events_by_time[frame_idx] = []
+                            hand_events_by_time[frame_idx].append(row)
+                            for d in range(-touch_window_frames, touch_window_frames + 1):
+                                pluck_frames.add(frame_idx + d)
+                        except ValueError:
+                            continue
+        except Exception as e:
+            print(f"Warning: Could not load hand CSV: {e}")
+
+    def string_color(sid):
+        hue = int(120 * (sid - 1) / 15)
+        hsv = np.uint8([[[hue, 180, 240]]])
+        bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)[0][0]
+        return tuple(map(int, bgr))
+
+    fidx = 0
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            fidx += 1
+
+            if fidx in pluck_frames:
+                events = hand_events_by_time.get(fidx, [])
+                y_offset = 30
+                for event in events:
+                    string_id = event.get("string", "")
+                    finger = event.get("finger", "")
+                    dist_px = event.get("dist_px", "")
+                    sid = event.get("sid", "")
+                    if string_id or sid:
+                        try:
+                            sid_num = int(sid) if sid else int(string_id.replace("S", "")) if string_id else None
+                            if sid_num is None:
+                                continue
+                            color = string_color(sid_num)
+                            label = f"S{sid_num}"
+                            if finger:
+                                label += f" ({finger})"
+                            if dist_px:
+                                try:
+                                    dist = float(dist_px)
+                                    label += f" {dist:.0f}px"
+                                except Exception:
+                                    pass
+                            text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
+                            text_x, text_y = 10, y_offset
+                            cv2.rectangle(
+                                frame,
+                                (text_x - 2, text_y - text_size[1] - 2),
+                                (text_x + text_size[0] + 2, text_y + 2),
+                                (0, 0, 0), -1
+                            )
+                            cv2.putText(
+                                frame, label, (text_x, text_y),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6,
+                                color, 2, cv2.LINE_AA
+                            )
+                            y_offset += 25
+                        except (ValueError, AttributeError):
+                            continue
+
+            writer.write(frame)
+    finally:
+        cap.release()
+        writer.release()
+
+
 def run_job_audio(job_id: str, model_path: str, video_path: str, use_yin_fallback: bool):
     try:
         jobs[job_id] = {"status": "running", "message": "Processing (audio)..."}
@@ -212,6 +320,16 @@ def run_job_hand(job_id: str, video_path: str, weights_path: str | None):
             preview=False,
             weights_path=weights_path,
         )
+        # Create pluck-filtered video: annotations only at touch moments (cleaner than every-frame)
+        filtered_path = os.path.join(out_dir, "hand_plucks_only.mp4")
+        try:
+            cap = cv2.VideoCapture(video_path)
+            fps_vid = cap.get(cv2.CAP_PROP_FPS) or 30.0
+            cap.release()
+            create_hand_filtered_video(video_path, csv_path, filtered_path, fps_vid)
+            video_out_path = filtered_path
+        except Exception as e:
+            print(f"Warning: Hand-filtered video failed, using full: {e}")
         # Re-encode to H.264 so browsers can play it (OpenCV mp4v isn't browser-compatible)
         from inference import FFMPEG_CMD
         h264_path = os.path.join(out_dir, "video_detected_h264.mp4")
@@ -742,7 +860,7 @@ def get_logs(job_id: str):
             except Exception as e:
                 print(f"Error parsing hand CSV: {e}")
         elif hand_csv and os.path.isfile(hand_csv) and len(audio_onsets) == 0:
-            # Hand-only job: include all hand events (no pluck filter)
+            # Hand-only job (both mode but no audio): include all hand events (no pluck filter)
             try:
                 with open(hand_csv, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
@@ -768,6 +886,35 @@ def get_logs(job_id: str):
                                 continue
             except Exception as e:
                 print(f"Error parsing hand CSV: {e}")
+
+    # Hand-only job: no "audio" or "hand" key, csv_path at top level
+    elif "audio" not in job and job.get("csv_path") and os.path.isfile(job["csv_path"]):
+        hand_csv = job["csv_path"]
+        try:
+            with open(hand_csv, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    time_str = row.get("time", "00:00.00")
+                    parts = time_str.split(":")
+                    if len(parts) == 2:
+                        try:
+                            hand_time = int(parts[0]) * 60 + float(parts[1])
+                            dist_px = float(row.get("dist_px", 0)) if row.get("dist_px") else 0.0
+                            confidence = max(0.0, min(1.0, 1.0 - (dist_px / 20.0))) if dist_px > 0 else 0.5
+                            events.append({
+                                "time": hand_time,
+                                "type": "hand",
+                                "string": f"S{row.get('string', '?')}",
+                                "finger": row.get("finger", ""),
+                                "distance": dist_px,
+                                "frame": 0,
+                                "status": "detected",
+                                "confidence": confidence,
+                            })
+                        except (ValueError, KeyError):
+                            continue
+        except Exception as e:
+            print(f"Error parsing hand-only CSV: {e}")
     
     # Sort by time
     events.sort(key=lambda x: x["time"])

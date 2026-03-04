@@ -1,0 +1,349 @@
+/* NAT SHIN NAUNG — Vintage Login */
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background: var(--parchment);
+  color: var(--text);
+  font-family: 'Libre Baskerville', Georgia, serif;
+}
+
+/* Left Split: Image Side */
+.login-image-side {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.login-background-image.slide-active {
+  opacity: 1;
+}
+
+.login-background-image.slide-hidden {
+  opacity: 0;
+}
+
+.login-image-overlay {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+  background: linear-gradient(to top, rgba(45, 31, 14, 0.92) 0%, rgba(61, 46, 26, 0.3) 50%, rgba(45, 31, 14, 0.75) 100%);
+}
+
+.login-logo {
+  font-family: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold-light);
+  text-decoration: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.login-logo:hover {
+  color: var(--cream-text);
+  text-decoration: none;
+}
+
+.login-image-text {
+  margin-bottom: 2rem;
+}
+
+.login-image-text h2 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 2.25rem;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.2;
+  color: var(--cream-text);
+}
+
+.carousel-indicators {
+  display: flex;
+  gap: 8px;
+  margin-top: 2rem;
+}
+
+.indicator {
+  width: 24px;
+  height: 3px;
+  background-color: rgba(196, 165, 116, 0.4);
+  border-radius: 2px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease, width 0.3s ease;
+}
+
+.indicator.active {
+  background-color: var(--gold-light);
+  width: 36px;
+}
+
+/* Right Split: Form Side */
+.login-form-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(180deg, var(--parchment-dark) 0%, var(--paper) 100%);
+  border-left: 3px solid var(--gold);
+}
+
+.login-form-wrapper {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-title {
+  font-family: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: var(--brown-dark);
+}
+
+.login-subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 2.5rem;
+}
+
+.login-link {
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.login-link:hover {
+  color: var(--gold-light);
+  text-decoration: underline;
+}
+
+/* Form Styles */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.input-group-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.login-input {
+  width: 100%;
+  background: var(--cream);
+  border: 2px solid var(--border);
+  color: var(--text);
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-input::placeholder {
+  color: var(--muted);
+}
+
+.login-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.full-width {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper .login-input {
+  padding-right: 3rem;
+  /* Space for the eye icon */
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+  color: var(--gold);
+}
+
+/* Checkbox */
+.terms-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  cursor: pointer;
+  margin-top: 0.25rem;
+}
+
+.terms-checkbox input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--cream);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.terms-checkbox input:checked {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.terms-checkbox input:checked::after {
+  content: "✔";
+  position: absolute;
+  color: white;
+  font-size: 12px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Submit Button */
+.login-submit-btn {
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--bronze) 100%);
+  color: var(--brown-dark);
+  border: none;
+  padding: 1rem;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: filter 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.login-submit-btn:hover {
+  filter: brightness(1.1);
+}
+
+.login-submit-btn:active {
+  transform: scale(0.98);
+}
+
+/* Divider */
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 2rem 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.login-divider span {
+  padding: 0 1rem;
+}
+
+/* Social Buttons */
+.social-login-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--text);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.social-btn:hover {
+  background: var(--parchment-dark);
+  border-color: var(--gold);
+}
+
+.social-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.google-btn {
+  width: 100%;
+}
+
+.login-error {
+  color: var(--error);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-image-side {
+    min-height: 40vh;
+    flex: none;
+  }
+
+  .login-form-side {
+    padding: 3rem 1.5rem;
+  }
+}
